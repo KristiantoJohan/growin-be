@@ -1,4 +1,4 @@
-package com.api.growin.helpers;
+package com.api.growin.utils;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -26,7 +26,7 @@ public class HttpResponse {
         Map<String, Object> response = new LinkedHashMap<>();
         response.put(
             "meta", Map.of(
-                "success", false,
+                "success", true,
                 "message", message
             )            
         );
@@ -45,7 +45,7 @@ public class HttpResponse {
         Map<String, Object> response = new LinkedHashMap<>();
         response.put(
             "meta", Map.of(
-                "success", false,
+                "success", true,
                 "message", message
             )            
         );

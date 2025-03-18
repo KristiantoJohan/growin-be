@@ -15,8 +15,8 @@ import com.api.growin.dto.response.loginResponse;
 import com.api.growin.dto.response.LogoutResponse;
 import com.api.growin.dto.response.RefreshResponse;
 import com.api.growin.dto.response.RegisterResponse;
-import com.api.growin.helpers.HttpResponse;
 import com.api.growin.services.AuthenticationService;
+import com.api.growin.utils.HttpResponse;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

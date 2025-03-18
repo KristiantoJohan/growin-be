@@ -7,10 +7,12 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
@@ -41,8 +43,14 @@ public class JwtConfig {
     @Autowired
     private final UserDetailsService userDetailsService;
 
+    @Autowired
+    private RedisTemplate<String, String> redisTemplate;
+
     @Value("${jwt.secretKey}")
     private String SECRET_KEY;
+
+    /* Initialize redis prefix */
+    private static final String BLACKLIST_KEY_PREFIX = "blacklist:";
 
      /**
      * Constructor for JwtConfig.
@@ -111,6 +119,28 @@ public class JwtConfig {
                 .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 24)) // 1 day
                 .signWith(getSignInKey(), SignatureAlgorithm.HS256)
                 .compact();
+    }
+
+    /**
+     * Store access token to redis blacklist
+     * 
+     * @param token       The JWT token.
+     */
+    public void blacklistedToken(String token) {
+        long expiration = extractExpiration(token).getTime() - System.currentTimeMillis();
+        if (expiration > 0) {
+            redisTemplate.opsForValue().set(BLACKLIST_KEY_PREFIX + token, "blacklisted", expiration, TimeUnit.MILLISECONDS);
+        }
+    }
+
+    /**
+     * Check if the access token existed in redis blacklist
+     * 
+     * @param token
+     * @return {@code true} if the token is blacklisted, otherwise {@code false}.
+     */
+    public boolean isTokenBlacklisted(String token) {
+        return Boolean.TRUE.equals(redisTemplate.hasKey(BLACKLIST_KEY_PREFIX + token));
     }
 
     /**
@@ -211,6 +241,10 @@ public class JwtConfig {
      * @return {@code true} if the token is valid, otherwise {@code false}.
      */
     public Boolean validateToken(String token) {
+        if (isTokenBlacklisted(token)) {
+            return false;
+        }
+
         String userEmail = extractId(token);
         if (StringUtils.isNotEmpty(userEmail) && !isTokenExpired(token)) {
             UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);

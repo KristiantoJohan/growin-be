@@ -14,7 +14,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public enum Role {
-    USER,
+    PM,
     ADMIN;
 
     /**
@@ -34,7 +34,7 @@ public enum Role {
             return Role.valueOf(role.toUpperCase()); // Mengonversi ke uppercase sebelum validasi
         } catch (IllegalArgumentException e) {
             log.error("Invalid role: {}", role);
-            throw new IllegalArgumentException("Invalid role: " + role + ". Allowed values: USER, ADMIN");
+            throw new IllegalArgumentException("Invalid role: " + role + ". Allowed values: PM, ADMIN");
         }
     }
 

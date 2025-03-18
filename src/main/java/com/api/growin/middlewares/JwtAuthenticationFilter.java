@@ -62,8 +62,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         // Validate if the Authorization header is present and starts with "Bearer "
         jwt = authHeader.substring(7);
 
-        // Check if the token is refresh token
-        if (jwtConfig.isRefreshToken(jwt)) {
+        // Check if the token is refresh token or if the access token has been blacklisted
+        if (jwtConfig.isRefreshToken(jwt) || jwtConfig.isTokenBlacklisted(jwt)) {
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
             return;
         }
@@ -77,11 +77,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             // Check if the access token valid and refresh token exists in database
             if (jwtConfig.isTokenValid(jwt, userDetails) && refreshTokenRepository.findByUserId(UUID.fromString(userId)).isPresent()) {
+                
                 // Create an authentication token
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
                 authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+
                 // Set the authentication in the security context
                 SecurityContextHolder.getContext().setAuthentication(authToken);
+
+                /* Store the access token to redis cache after its used */
+                jwtConfig.blacklistedToken(jwt);
             }
         }
 

@@ -1,4 +1,4 @@
-package com.api.growin.exceptions;
+package com.api.growin.configs;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -12,7 +12,12 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import com.api.growin.helpers.HttpResponse;
+import com.api.growin.exceptions.InvalidCredentialsException;
+import com.api.growin.exceptions.MinioRuntimeException;
+import com.api.growin.exceptions.RefreshTokenNotFoundException;
+import com.api.growin.exceptions.TokenInvalidException;
+import com.api.growin.exceptions.UsernameAlreadyExistsException;
+import com.api.growin.utils.HttpResponse;
 
 import jakarta.persistence.EntityNotFoundException;
 
@@ -143,6 +148,42 @@ public class GlobalHandlerException {
         
         /* Sending the http response to client */
         return HttpResponse.errorResponse("Data Not Found", HttpStatus.NOT_FOUND);
+    }
+
+    /**
+     * Handles {@link MinioRuntimeException} when an unexpected runtime exception from Minio oocured.
+     * <p>
+     *      This method logs the error and returns a standardized HTTP response with a 400 bad request status.
+     * </p>
+     *
+     * @param exception The thrown {@code MinioRuntimeException} containing details about the error.
+     * @return A {@link ResponseEntity} containing an error message and HTTP status {@code BAD_REQUEST}.
+     */
+    @ExceptionHandler(MinioRuntimeException.class)
+    public ResponseEntity<Object> handleMinioRuntimeException(MinioRuntimeException exception) {
+        /* Sending the error to log */
+        LOGGER.error("Minio failed to perform operation", exception.getMessage(), exception);
+        
+        /* Sending the http response to client */
+        return HttpResponse.errorResponse("Bad request", HttpStatus.BAD_REQUEST);
+    }
+
+    /**
+     * Handles {@link RuntimeException} when an unexpected runtime exception oocured.
+     * <p>
+     *      This method logs the error and returns a standardized HTTP response with a 400 bad request status.
+     * </p>
+     *
+     * @param exception The thrown {@code RuntimeException} containing details about the error.
+     * @return A {@link ResponseEntity} containing an error message and HTTP status {@code BAD_REQUEST}.
+     */
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<Object> handleRuntimeException(RuntimeException exception) {
+        /* Sending the error to log */
+        LOGGER.error("Unexpected runtime exception", exception.getMessage(), exception);
+        
+        /* Sending the http response to client */
+        return HttpResponse.errorResponse("Bad request", HttpStatus.BAD_REQUEST);
     }
 
     /**

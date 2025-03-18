@@ -83,6 +83,12 @@ public class User implements UserDetails {
      */
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<RefreshToken> refreshTokens;
+
+    /**
+     * Collection of projects associated with the user.
+     */
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    private Set<ProjectProduct> project;
     
     /**
      *  Status whether the user is verified by the administrator or
