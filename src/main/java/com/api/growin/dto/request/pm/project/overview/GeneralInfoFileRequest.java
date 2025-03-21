@@ -5,6 +5,10 @@ import org.springframework.web.multipart.MultipartFile;
 import com.api.growin.utils.ObjectConstraint;
 
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * Data Transfer Object (DTO) for handling file uploads related to general project information.
@@ -17,6 +21,10 @@ import jakarta.validation.constraints.NotNull;
  * @version 1.0
  * @since 2025-02-14
  */
+@Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class GeneralInfoFileRequest {
 
     /**

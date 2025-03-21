@@ -63,7 +63,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         jwt = authHeader.substring(7);
 
         // Check if the token is refresh token or if the access token has been blacklisted
-        if (jwtConfig.isRefreshToken(jwt) || jwtConfig.isTokenBlacklisted(jwt)) {
+        // || jwtConfig.isTokenBlacklisted(jwt)
+        if (jwtConfig.isRefreshToken(jwt)) {
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
             return;
         }
@@ -86,7 +87,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 SecurityContextHolder.getContext().setAuthentication(authToken);
 
                 /* Store the access token to redis cache after its used */
-                jwtConfig.blacklistedToken(jwt);
+                // jwtConfig.blacklistedToken(jwt);
             }
         }
 

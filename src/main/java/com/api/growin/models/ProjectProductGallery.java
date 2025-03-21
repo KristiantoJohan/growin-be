@@ -44,6 +44,7 @@ public class ProjectProductGallery {
     /**
      *  Link of the image from S3 storage
      */
+    @Column(columnDefinition = "LONGTEXT")
     private String image_url;
 
     /**

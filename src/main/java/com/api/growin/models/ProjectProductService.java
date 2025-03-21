@@ -43,11 +43,13 @@ public class ProjectProductService {
     /**
      * Define the vision of the product
      */
+    @Column(columnDefinition = "LONGTEXT")
     private String vision;
 
     /**
      * Define the mission of the product
      */
+    @Column(columnDefinition = "LONGTEXT")
     private String mission;
 
     /**

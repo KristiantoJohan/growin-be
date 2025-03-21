@@ -1,13 +1,18 @@
 package com.api.growin.models;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToOne;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -31,37 +36,48 @@ public class ProjectProductComplienceDocuments {
     /**
      *  One To many relation with product
      */
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "project_id", nullable = false)
     private ProjectProduct project;
 
     /**
-     * Link for the legal complience document
+     * Type of the document.
+     * <p>
+     *     Available type:
+     *     <ul>
+     *          <li> Legal Complience </li>
+     *          <li> Privacy Policy </li>
+     *          <li> Regualatory Approval </li>
+     *          <li> Service Level Aggreement </li>
+     *          <li> Data Processing Aggreement </li>
+     *          <li> Third party complience </li>
+     *      </ul> 
+     * </p>
      */
-    private String legalComplience;
+    private String document;
 
     /**
-     * Link for the privacy policy document
+     * Link for the complience document
      */
-    private String privacyPolicy;
+    @Column(columnDefinition = "LONGTEXT")
+    private String documentUrl;
 
     /**
-     * Link for the regulatory approval document
+     * Link for the complience document
      */
-    private String regulatoryApproval;
+    private String documentOriginalName;
 
     /**
-     * Link for the service level aggreement document
+     * Timestamp indicating when the user was created.
      */
-    private String serviceLevelAggrement;
+    @CreationTimestamp
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
 
     /**
-     * Link for the data processing agreement document
+     * Timestamp indicating the last update of user details.
      */
-    private String dataProcessingAgreement;
-
-    /**
-     * Link for the third party compliance (ISO 27001) document
-     */
-    private String thirdPartyCompliance;
+    @UpdateTimestamp
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 }

@@ -47,13 +47,14 @@ public class FileUploader {
      *     The uploaded file is assigned a unique name using {@link UUID}.
      * </p>
      *
+     * @param folder the target location for the uploaded file
      * @param file the file to be uploaded
      * @return the pre-signed URL of the uploaded file
      * @throws MinioRuntimeException if the upload operation fails
      */
-    public String uploadFile(MultipartFile file) {
+    public String uploadFile(String folder, MultipartFile file) {
         return OperationExecutor.execute(() -> {
-            String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
+            String fileName = folder + "/" + UUID.randomUUID() + "_" + file.getOriginalFilename();
 
             boolean found = minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucketName).build());
             if (!found) {
@@ -91,13 +92,13 @@ public class FileUploader {
      * @return a list of pre-signed URLs of the uploaded files
      * @throws MinioRuntimeException if any upload operation fails
      */
-    public List<String> uploadFiles(List<MultipartFile> files) {
+    public List<String> uploadFiles(String folder, List<MultipartFile> files) {
         /* Array to store the new URLs of uploaded files */
         List<String> fileUrls = new ArrayList<>();
 
         /* Upload all files */
         for (MultipartFile file : files) {
-            fileUrls.add(uploadFile(file));
+            fileUrls.add(uploadFile(folder, file));
         }
 
         return fileUrls;
@@ -136,8 +137,8 @@ public class FileUploader {
      * @return the pre-signed URL of the newly uploaded file
      * @throws MinioRuntimeException if the update operation fails
      */
-    public String updateFile(String oldFileName, MultipartFile newFile) {
+    public String updateFile(String oldFileName, String folder, MultipartFile newFile) {
         deleteFile(oldFileName);
-        return uploadFile(newFile);
+        return uploadFile(folder, newFile);
     }
 }

@@ -1,7 +1,12 @@
 package com.api.growin.models;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -74,4 +79,18 @@ public class ProjectProductTeamHighlight {
      * Contact of the team leader
      */
     private String teamLeaderPhone;
+
+    /**
+     * Timestamp indicating when the product was created.
+     */
+    @CreationTimestamp
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
+
+    /**
+     * Timestamp indicating the last update of product.
+     */
+    @UpdateTimestamp
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 }

@@ -71,8 +71,8 @@ public class ProjectProduct {
     /**
      * One to one relation with product_compliance_document table
      */
-    @OneToOne(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
-    private ProjectProductComplienceDocuments productComplienceDocuments;
+    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<ProjectProductComplienceDocuments> productComplienceDocuments;
 
     /**
      * Timestamp indicating when the user was created.

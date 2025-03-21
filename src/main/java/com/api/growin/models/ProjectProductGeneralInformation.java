@@ -69,6 +69,7 @@ public class ProjectProductGeneralInformation {
     /**
      * URL of the product logo.
      */
+    @Column(columnDefinition = "LONGTEXT")
     private String logo;
 
     /**

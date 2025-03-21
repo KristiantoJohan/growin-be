@@ -28,14 +28,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class GeneralInfoJSONRequest {
-    /** 
-     * The unique identifier for the product.
-     * <p>
-     *      This field must not be blank.
-     * </p>
-     */
-    @NotBlank(message = "projectId must not be null")
-    private String project_id;
 
     /** 
      * The name of the product.

@@ -12,8 +12,11 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+
 import com.api.growin.exceptions.InvalidCredentialsException;
 import com.api.growin.exceptions.MinioRuntimeException;
+import com.api.growin.exceptions.ProjectProductNotFoundException;
 import com.api.growin.exceptions.RefreshTokenNotFoundException;
 import com.api.growin.exceptions.TokenInvalidException;
 import com.api.growin.exceptions.UsernameAlreadyExistsException;
@@ -78,6 +81,24 @@ public class GlobalHandlerException {
     }
 
     /**
+     * Handles validation errors when the size of uploaded file above the maximum.
+     * <p>
+     *      Logs the error and returns an HTTP 400 (Bad Request) response.
+     * </p>
+     *
+     * @param exception The exception containing validation errors.
+     * @return A standardized error response with HTTP status {@code BAD_REQUEST (400)}.
+     */
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<Object> handleFileMaxSizeExceptions(MaxUploadSizeExceededException exception) {
+        /* Sending the error to log */
+        LOGGER.error("Server maximum size limitation: {}", exception.getMessage(), exception);
+
+        /* Sending the http response to client */
+        return HttpResponse.errorResponse("Server maximum size limitation", HttpStatus.BAD_REQUEST);
+    }
+
+    /**
      * Handles {@link InvalidCredentialsException} when a user provides incorrect authentication details.
      * <p>
      *      This method logs the error and returns a standardized HTTP response with a 401 Unauthorized status.
@@ -130,6 +151,24 @@ public class GlobalHandlerException {
         
         /* Sending the http response to client */
         return HttpResponse.errorResponse("Refresh token expired", HttpStatus.BAD_REQUEST);
+    }
+
+    /**
+     * Handles {@link ProjectProductNotFoundException} when a requested project product ID is not found.
+     * <p>
+     *      This method logs the error and returns a standardized HTTP response with a 404 Not Found status.
+     * </p>
+     *
+     * @param exception The thrown {@code EntityNotFoundException} containing details about the error.
+     * @return A {@link ResponseEntity} containing an error message and HTTP status {@code NOT_FOUND}.
+     */
+    @ExceptionHandler(ProjectProductNotFoundException.class)
+    public ResponseEntity<Object> handleProjectProductNotFoundException(ProjectProductNotFoundException exception) {
+        /* Sending the error to log */
+        LOGGER.error("Invalid project product ID", exception.getMessage(), exception);
+        
+        /* Sending the http response to client */
+        return HttpResponse.errorResponse("Invalid project product ID", HttpStatus.NOT_FOUND);
     }
 
     /**
