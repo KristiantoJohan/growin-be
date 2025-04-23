@@ -84,4 +84,16 @@ public class Project {
      */
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<ProjectComplienceDocuments> projectComplienceDocuments;
+    
+    /**
+     * One to many relation with project_step_stpd table
+     */
+    @OneToOne(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
+    private ProjectStepStpd projectStepStpd;
+    
+    /**
+     * One to many relation with project_segmenting_targeting table
+     */
+    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<ProjectSegmentingTargeting> projectSegmentingTargetings;
 }

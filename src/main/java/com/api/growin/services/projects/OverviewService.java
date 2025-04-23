@@ -243,7 +243,7 @@ public class OverviewService {
                 ProjectGallery.builder()
                     .project(project)
                     .url(uploadedPhotoUrl.get(i))
-                    .build()    
+                    .build()
             );
         }
 
