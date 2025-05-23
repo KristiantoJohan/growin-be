@@ -139,7 +139,7 @@ public class JwtUtilities {
      * @return {@code true} if the token is blacklisted, otherwise {@code false}.
      */
     public boolean isTokenBlacklisted(String token) {
-        return Boolean.TRUE.equals(redisTemplate.hasKey(BLACKLIST_KEY_PREFIX + token));
+        return redisTemplate.hasKey(BLACKLIST_KEY_PREFIX + token);
     }
 
     /**

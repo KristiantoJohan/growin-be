@@ -1,25 +1,17 @@
 package com.api.growin.services.projects;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import com.api.growin.dto.response.GeneralResponse;
+import com.api.growin.dto.response.projects.*;
+import com.api.growin.models.*;
+import com.api.growin.repositories.*;
 import org.springframework.stereotype.Service;
 
-import com.api.growin.dto.response.projects.ProjectBriefResponse;
-import com.api.growin.dto.response.projects.ProjectComplienceDocumentsResponse;
-import com.api.growin.dto.response.projects.ProjectDetailsResponse;
-import com.api.growin.dto.response.projects.ProjectGalleryResponse;
-import com.api.growin.dto.response.projects.ProjectInitResponse;
-import com.api.growin.dto.response.projects.ProjectOverviewResponse;
 import com.api.growin.exceptions.ProjectNotFoundException;
-import com.api.growin.models.Project;
-import com.api.growin.models.ProjectStepOverview;
-import com.api.growin.models.User;
-
-import com.api.growin.repositories.ProjectRepository;
-import com.api.growin.repositories.ProjectStepOverviewRepository;
-import com.api.growin.repositories.UserRepository;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +23,8 @@ public class ProjectService {
     private final UserRepository userRepository;
     private final ProjectRepository projectRepository;
     private final ProjectStepOverviewRepository projectStepOverviewRepository;
+    private final ProjectStepStpdRepository projectStepStpdRepository;
+    private final ProjectPricingPlanRepository projectPricingPlanRepository;
 
     /**
      * Initializes a new project for the specified user.
@@ -49,7 +43,7 @@ public class ProjectService {
         /* Find the user with corresponding request.user_id */
         User user = userRepository.findById(UUID.fromString(userId)).orElseThrow(() -> new EntityNotFoundException("Invalid user"));
 
-        /* Initialize new main data project and sub data project */
+        /* Initialize new main data project and sub data of the project */
         Project newProduct = Project.builder()
             .user(user)
             .build();
@@ -57,10 +51,20 @@ public class ProjectService {
         ProjectStepOverview newStepOverview = ProjectStepOverview.builder()
             .project(newProduct)
             .build();
+        
+        ProjectStepStpd newStepStpd = ProjectStepStpd.builder()
+            .project(newProduct)
+            .build();
+
+        ProjectPricingPlan newProjectPricingPlan = ProjectPricingPlan.builder()
+            .project(newProduct)
+            .build();
 
         /* Save to database */
         newProduct = projectRepository.save(newProduct);
         newStepOverview = projectStepOverviewRepository.save(newStepOverview);
+        newStepStpd = projectStepStpdRepository.save(newStepStpd);
+        newProjectPricingPlan = projectPricingPlanRepository.save(newProjectPricingPlan);
         
         /* Sending the response */
         return ProjectInitResponse.builder()
@@ -98,7 +102,7 @@ public class ProjectService {
                 .id(project.getId().toString())
                 .user_id(user.getId().toString())
                 .progress(project.getProgress().toString())
-                .productName(project.getProjectStepOverviews().getProductName().toString())
+                .productName(project.getProjectStepOverviews().getProductName())
                 .productCategory(project.getProjectStepOverviews().getCategory().toString())
                 .productPlatform(project.getProjectStepOverviews().getPlatform().toString())                
                 .createdAt(project.getCreatedAt())
@@ -131,30 +135,32 @@ public class ProjectService {
             .progress(project.getProgress().toString())
             .projectOverview(ProjectOverviewResponse.builder()
                 .id(project.getProjectStepOverviews().getId().toString())
-                .logo(project.getProjectStepOverviews().getLogo().toString())
-                .productName(project.getProjectStepOverviews().getProductName().toString())
+                .logo(project.getProjectStepOverviews().getLogo())
+                .productName(project.getProjectStepOverviews().getProductName())
                 .tagline(project.getProjectStepOverviews().getTagline())
                 .description(project.getProjectStepOverviews().getDescription())
                 .category(project.getProjectStepOverviews().getCategory().toString())
                 .stage(project.getProjectStepOverviews().getStage().toString())
                 .platform(project.getProjectStepOverviews().getPlatform().toString())
                 .websiteUrl(project.getProjectStepOverviews().getWebsiteUrl())
-                .teamInCharge(project.getProjectStepOverviews().getTeamInCharge().toString())
+                .teamInCharge(project.getProjectStepOverviews().getTeamInCharge())
                 .hustler(project.getProjectStepOverviews().getHustler())
                 .hipster(project.getProjectStepOverviews().getHipster())
                 .hacker(project.getProjectStepOverviews().getHacker())
-                .teamLeader(project.getProjectStepOverviews().getTeamLeader().toString())
-                .email(project.getProjectStepOverviews().getEmail().toString())
-                .phone(project.getProjectStepOverviews().getPhone().toString())
-                .productVision(project.getProjectStepOverviews().getProductVision().toString())
-                .productMission(project.getProjectStepOverviews().getProductMission().toString())
+                .teamLeader(project.getProjectStepOverviews().getTeamLeader())
+                .email(project.getProjectStepOverviews().getEmail())
+                .phone(project.getProjectStepOverviews().getPhone())
+                .productVision(project.getProjectStepOverviews().getProductVision())
+                .productMission(project.getProjectStepOverviews().getProductMission())
+                .createdAt(project.getProjectStepOverviews().getCreatedAt())
+                .updatedAt(project.getProjectStepOverviews().getUpdatedAt())
                 .build()
             )
             .projectGallery(project.getProjectGalleries()
                 .stream()
                 .map(gallery -> ProjectGalleryResponse.builder()
                     .id(gallery.getId().toString())
-                    .url(gallery.getUrl().toString())
+                    .url(gallery.getUrl())
                     .createdAt(gallery.getCreatedAt())
                     .updateAt(gallery.getUpdatedAt())
                     .build()
@@ -164,14 +170,40 @@ public class ProjectService {
                 .stream()
                 .map(complienceDocuments -> ProjectComplienceDocumentsResponse.builder()
                     .id(complienceDocuments.getId().toString())
-                    .documentUrl(complienceDocuments.getDocumentUrl().toString())
-                    .document(complienceDocuments.getDocument().toString())
+                    .documentUrl(complienceDocuments.getDocumentUrl())
+                    .document(complienceDocuments.getDocument())
                     .documentOriginalName(complienceDocuments.getDocumentOriginalName())
                     .createdAt(complienceDocuments.getCreatedAt())
                     .updatedAt(complienceDocuments.getUpdatedAt())
                     .build()
                 ).collect(Collectors.toList())
             )
-            .build();        
+            .projectPricingPlan(ProjectPricingPlanResponse.builder()
+                .id(project.getProjectPricingPlan().getId().toString())
+                .targetPriceStrategy(project.getProjectPricingPlan().getTargetPriceStrategy())
+                .targetPriceBenchmark(project.getProjectPricingPlan().getTargetPriceBenchmark())
+                .createdAt(project.getProjectPricingPlan().getCreatedAt())
+                .updatedAt(project.getProjectPricingPlan().getUpdatedAt())
+                .build()
+            )
+        .build();
+    }
+
+    public GeneralResponse deleteProject(String projectId) {
+        /* Get the project with the corresponding id  */
+        Project project = projectRepository.findById(UUID.fromString(projectId)).orElseThrow(() -> new ProjectNotFoundException("Selected project not found"));
+
+        /* Save to database */
+        projectStepOverviewRepository.deleteByProject(project);
+        projectStepStpdRepository.deleteByProject(project);
+        projectPricingPlanRepository.deleteByProject(project);
+        projectRepository.delete(project);
+
+
+        /* Sending the response */
+        return GeneralResponse.builder()
+                .createdAt(LocalDateTime.now())
+                .updateAt(LocalDateTime.now())
+                .build();
     }
 }

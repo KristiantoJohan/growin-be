@@ -52,6 +52,13 @@ public class Project {
     @Builder.Default
     @Enumerated(EnumType.STRING)
     private Progress progress = Progress.INCOMPLETE;
+    
+    /**
+     *  Pricing Status of the overall project
+     */
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    private PricingStatus pricingStatus = PricingStatus.INCOMPLETE;
 
     /** 
      * Timestamp indicating when the user was created.
@@ -96,4 +103,10 @@ public class Project {
      */
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<ProjectSegmentingTargeting> projectSegmentingTargetings;
+    
+    /**
+     * One to many relation with project_pricing_plan table
+     */
+    @OneToOne(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
+    private ProjectPricingPlan projectPricingPlan;
 }

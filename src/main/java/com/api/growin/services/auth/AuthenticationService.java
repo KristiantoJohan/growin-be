@@ -4,6 +4,9 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.UUID;
 
+import com.api.growin.utils.CookiesOperator;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -41,11 +44,14 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class AuthenticationService {
+
+    /* Initialize dependencies */
     private final UserRepository userRepository;
     private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtilities jwtConfig;
     private final AuthenticationManager authenticationManager;
+    private final CookiesOperator cookiesOperator;
 
     /**
      * Registers a new user in the system.
@@ -75,7 +81,7 @@ public class AuthenticationService {
         /* Build the response */
         return RegisterResponse.builder()
             .id(user.getId().toString())
-            .username(user.getUsername().toString())
+            .username(user.getUsername())
             .role(user.getAuthorities().toString())
             .credentialsNonExpired(user.isCredentialsNonExpired())
             .accountNonExpired(user.isAccountNonExpired())
@@ -91,7 +97,7 @@ public class AuthenticationService {
      * @return a {@link LoginResponse} containing access and refresh tokens
      * @throws InvalidCredentialsException if authentication fails due to incorrect credentials
      */
-    public LoginResponse login(LoginRequest authenticationRequest) {
+    public LoginResponse login(LoginRequest authenticationRequest, HttpServletResponse response) {
         /* Authenticate the username and password using authentication manager */
         try {
             authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(authenticationRequest.getUsername(), authenticationRequest.getPassword()));
@@ -116,11 +122,13 @@ public class AuthenticationService {
         
         /* Build save the refresh token to database */
         storedToken = refreshTokenRepository.save(storedToken);
+
+        /* Store tokens to http-only cookie */
+        cookiesOperator.setCookie(response, "access_token", jwtToken, 7 * 24 * 60 * 60);
+        cookiesOperator.setCookie(response, "refresh_token", refreshToken, 7 * 24 * 60 * 60);
         
         /* Build the response */
         return LoginResponse.builder()
-            .accessToken(jwtToken)
-            .refreshToken(refreshToken)
             .userId(user.getId())
             .build();
     }
@@ -144,25 +152,27 @@ public class AuthenticationService {
      * @throws RefreshTokenNotFoundException If the provided refresh token is not found in the database.
      * @throws TokenInvalidException If the refresh token has expired.
      */
-    public RefreshResponse refreshToken(RefreshRequest refreshRequest) {
-        /* Extract userId from access token */
-        String userId = jwtConfig.extractId(refreshRequest.getToken());
-
-        RefreshToken getRefreshToken = refreshTokenRepository.findByUserId(UUID.fromString(userId)).orElseThrow(() -> new RefreshTokenNotFoundException("Invalid refresh token"));
-
-        /* Check if the token has expired */
-        if (getRefreshToken.getExpireAt().isBefore(LocalDateTime.now())) {
-            refreshTokenRepository.delete(getRefreshToken);
-            throw new TokenInvalidException("Invalid refresh token");
-        }
-
-        String newAccessToken = jwtConfig.generateToken(getRefreshToken.getUser());
-
-        /* Send the message */
-        return RefreshResponse.builder()
-            .accessToken(newAccessToken)
-            .build();
-    }
+//    public RefreshResponse refreshToken(RefreshRequest refreshRequest, HttpServletResponse response) {
+//        /* Extract userId from access token */
+//        String userId = jwtConfig.extractId(refreshRequest.getToken());
+//
+//        RefreshToken getRefreshToken = refreshTokenRepository.findByUserId(UUID.fromString(userId)).orElseThrow(() -> new RefreshTokenNotFoundException("Invalid refresh token"));
+//
+//        /* Check if the token has expired */
+//        if (getRefreshToken.getExpireAt().isBefore(LocalDateTime.now())) {
+//            refreshTokenRepository.delete(getRefreshToken);
+//            throw new TokenInvalidException("Invalid refresh token");
+//        }
+//
+//        String newAccessToken = jwtConfig.generateToken(getRefreshToken.getUser());
+//
+//        /* Store tokens to http-only cookie */
+//        cookiesOperator.setCookie(response, "access_token", newAccessToken, 7 * 24 * 60 * 60);
+//
+//        /* Send the message */
+//        return RefreshResponse.builder()
+//            .build();
+//    }
 
     /**
      * Handles the logout process by invalidating the provided refresh token.
@@ -179,12 +189,17 @@ public class AuthenticationService {
      * @return A {@link LogoutResponse} containing a success message.
      * @throws RefreshTokenNotFoundException If the provided refresh token does not exist in the database.
      */
-    public LogoutResponse logout(String refreshToken) {
+    public LogoutResponse logout(HttpServletRequest refreshToken, HttpServletResponse response) {
         /* Check if the userId existed in database */
-        RefreshToken tokenExist = refreshTokenRepository.findByToken(refreshToken).orElseThrow(() -> new RefreshTokenNotFoundException("Invalid refresh token"));
+        String getToken = cookiesOperator.getCookieValue(refreshToken, "refresh_token");
+        RefreshToken tokenExist = refreshTokenRepository.findByToken(getToken).orElseThrow(() -> new RefreshTokenNotFoundException("Invalid refresh token"));
         
         /* delete the current refresh token from database */
         refreshTokenRepository.delete(tokenExist);
+
+        /* Clear cookies */
+        cookiesOperator.clearCookie(response, "access_token");
+        cookiesOperator.clearCookie(response, "refresh_token");
 
         return LogoutResponse.builder()
             .message("Successfully logout")

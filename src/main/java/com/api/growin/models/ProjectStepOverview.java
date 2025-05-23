@@ -53,7 +53,7 @@ public class ProjectStepOverview {
      * Unique name of the product.
      */
     @Builder.Default
-    @Column(unique = true, nullable = false)
+    @Column(nullable = false)
     private String productName = "";
 
     /**

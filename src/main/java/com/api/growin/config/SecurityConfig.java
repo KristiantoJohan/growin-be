@@ -59,11 +59,13 @@ public class SecurityConfig {
                     "/swagger-ui.html",
                     "/webjars/**"
                 )
-                .permitAll()
-                .requestMatchers("/api/v1/admin/**").hasAuthority(Role.ADMIN.name())
-                .requestMatchers("/api/v1/pm/**").hasAnyAuthority(Role.PM.name(), Role.ADMIN.name())
-                .anyRequest().authenticated()
-            )            
+                    .permitAll()
+                    .requestMatchers("/api/v1/admin/**").hasAuthority(Role.ADMIN.name())
+                    .requestMatchers("/api/v1/pm/**").hasAnyAuthority(Role.PM.name(), Role.ADMIN.name())
+                    .requestMatchers("/api/v1/fm/**").hasAnyAuthority(Role.FM.name(), Role.ADMIN.name())
+                    .requestMatchers("/api/v1/mm/**").hasAnyAuthority(Role.MM.name(), Role.ADMIN.name())
+                    .anyRequest().authenticated()
+            )
             .sessionManagement(manager -> manager.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authenticationProvider(authenticationProvider)
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

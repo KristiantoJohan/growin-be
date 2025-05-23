@@ -3,9 +3,11 @@ package com.api.growin.controllers.projects;
 import java.util.List;
 import java.util.UUID;
 
+import com.api.growin.dto.response.GeneralResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -77,13 +79,22 @@ public class ProjectsController {
      *     If the project is not found, an appropriate exception is thrown.
      * </p>
      *
-     * @param projectId The unique identifier of the project to be retrieved.
+     * @param projectid The unique identifier of the project to be retrieved.
      * @return A response entity containing detailed information of the requested project.
      */
     @GetMapping("/{projectid}")
-    public ResponseEntity<Object> getProjectsById(@PathVariable UUID projectId) {
+    public ResponseEntity<Object> getProjectsById(@PathVariable UUID projectid) {
         /* Getting the corresponding project */
-        ProjectDetailsResponse response = projectService.getDetailsProjectById(projectId.toString());
+        ProjectDetailsResponse response = projectService.getDetailsProjectById(projectid.toString());
+
+        /* Sending response */
+        return HttpResponse.successResponse("Successfully getting the projects", response);
+    }
+
+    @DeleteMapping("/{projectid}")
+    public ResponseEntity<Object> deleteProject(@PathVariable UUID projectid) {
+        /* Getting the corresponding project */
+        GeneralResponse response = projectService.deleteProject(projectid.toString());
 
         /* Sending response */
         return HttpResponse.successResponse("Successfully getting the projects", response);

@@ -90,8 +90,8 @@ public class OverviewService {
             throw new EntityNotFoundException("Project overview not found");
         }
 
-        /**
-         *  Update product logo if existed and upload if not existed
+        /*
+           Update product logo if existed and upload if not existed
          */
         String logoPath = projectStepOverview.getLogo();
         if (request.getLogo() != null && !request.getLogo().isEmpty()) {
@@ -103,25 +103,25 @@ public class OverviewService {
             projectStepOverview.setLogo(logoPath);
         }        
 
-        /**
-         *  Update the selected product overview
+        /*
+           Update the selected product overview
          */
         projectStepOverview.setLogo(logoPath);
-        projectStepOverview.setProductName(request.getProductName().toString());
-        projectStepOverview.setTagline(request.getTagline().toString());
-        projectStepOverview.setDescription(request.getDescription().toString());
-        projectStepOverview.setCategory(Category.fromString(request.getCategory().toString()));
-        projectStepOverview.setStage(CurrentStage.fromString(request.getStage().toString()));
-        projectStepOverview.setPlatform(Platform.fromString(request.getPlatform().toString()));
-        projectStepOverview.setWebsiteUrl(request.getWebsiteUrl().toString());
-        projectStepOverview.setTeamInCharge(request.getTeamInCharge().toString());
+        projectStepOverview.setProductName(request.getProductName());
+        projectStepOverview.setTagline(request.getTagline());
+        projectStepOverview.setDescription(request.getDescription());
+        projectStepOverview.setCategory(Category.fromString(request.getCategory()));
+        projectStepOverview.setStage(CurrentStage.fromString(request.getStage()));
+        projectStepOverview.setPlatform(Platform.fromString(request.getPlatform()));
+        projectStepOverview.setWebsiteUrl(request.getWebsiteUrl());
+        projectStepOverview.setTeamInCharge(request.getTeamInCharge());
         projectStepOverview.setHustler(request.getHustler());
         projectStepOverview.setHipster(request.getHipster());
         projectStepOverview.setHacker(request.getHacker());
-        projectStepOverview.setEmail(request.getEmail().toString());
-        projectStepOverview.setPhone(request.getPhone().toString());
-        projectStepOverview.setProductVision(request.getProductVision().toString());
-        projectStepOverview.setProductMission(request.getProductMission().toString());
+        projectStepOverview.setEmail(request.getEmail());
+        projectStepOverview.setPhone(request.getPhone());
+        projectStepOverview.setProductVision(request.getProductVision());
+        projectStepOverview.setProductMission(request.getProductMission());
 
         projectStepOverview = projectStepOverviewRepository.save(projectStepOverview);
 
@@ -176,11 +176,8 @@ public class OverviewService {
                     .findFirst();
     
                 String newUrl;
-                if (existingDocOpt.isPresent()) {
-                    // Hapus file lama di MinIO
-                    ProjectComplienceDocuments existingDoc = existingDocOpt.get();
-                    fileUploader.deleteFile(existingDoc.getDocumentUrl());
-                }
+                // Hapus file lama di MinIO
+                existingDocOpt.ifPresent(existingDoc -> fileUploader.deleteFile(existingDoc.getDocumentUrl()));
     
                 // Upload file baru
                 newUrl = fileUploader.uploadFile(pathFolder, file);

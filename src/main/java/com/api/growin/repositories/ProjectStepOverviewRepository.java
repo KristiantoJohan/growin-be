@@ -29,4 +29,6 @@ public interface ProjectStepOverviewRepository extends JpaRepository<ProjectStep
      * @return The {@link ProjectStepOverview} associated with the specified project.
      */
     ProjectStepOverview findByProject(Project project);
+
+    void deleteByProject(Project project);
 }

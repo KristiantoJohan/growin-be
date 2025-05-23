@@ -62,6 +62,12 @@ public class ProjectDetailsResponse {
     private List<ProjectComplienceDocumentsResponse> projectComplienceDocuments;
 
     /**
+     * Nested DTO containing the pricing plan of the product in the project.
+     * This includes the target pricing based on its strategy and its benchmark.
+     */
+    private ProjectPricingPlanResponse projectPricingPlan;
+
+    /**
      * The timestamp indicating when the project was created.
      */
     private LocalDateTime createdAt;

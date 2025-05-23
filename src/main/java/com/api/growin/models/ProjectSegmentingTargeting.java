@@ -3,6 +3,7 @@ package com.api.growin.models;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import jakarta.persistence.ManyToOne;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -48,7 +49,7 @@ public class ProjectSegmentingTargeting {
     /**
      * One-to-one association with the related project.
      */
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "project_id", nullable = false)
     private Project project;
 

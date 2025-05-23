@@ -17,7 +17,7 @@ public interface ProjectComplienceDocumentsRepository extends JpaRepository<Proj
     /**
      * Retrieves all product complience documents associated with a given product.
      *
-     * @param product the product whose complience documents are to be retrieved.
+     * @param project the product whose complience documents are to be retrieved.
      * @return a list of {@link ProjectComplienceDocuments} entities linked to the specified product.
      */
     List<ProjectComplienceDocuments> findByProject(Project project);

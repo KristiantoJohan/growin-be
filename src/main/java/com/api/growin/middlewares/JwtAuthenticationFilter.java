@@ -3,6 +3,7 @@ package com.api.growin.middlewares;
 import java.io.IOException;
 import java.util.UUID;
 
+import com.api.growin.utils.CookiesOperator;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -37,6 +38,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtUtilities jwtUtilities;
     private final UserDetailsServiceImpl userDetailsServiceImpl;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final CookiesOperator cookiesOperator;
 
     /**
      * Filters incoming requests to check for a valid JWT token.
@@ -50,35 +52,66 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain filterChain) throws ServletException, IOException {
 
-        final String authHeader = request.getHeader("Authorization");
+        // final String authHeader = request.getHeader("Authorization");
+
+        // Ambil token dari cookie, misal "accessToken"
+        final String authHeader = cookiesOperator.getCookieValue(request, "access_token");
+        final String refreshHeader = cookiesOperator.getCookieValue(request, "refresh_token");
+
         final String jwt;
         final String userId;
 
-        if (StringUtils.isEmpty(authHeader) || !authHeader.startsWith("Bearer ")) {
+        if (StringUtils.isEmpty(authHeader)) {
+            if (StringUtils.isNotEmpty(refreshHeader)) {
+                // Extract userId dari refresh token
+                String id = jwtUtilities.extractId(refreshHeader);
+
+                if (StringUtils.isNotEmpty(id)) {
+                    UserDetails userDetails = userDetailsServiceImpl.loadUserByUsername(id);
+
+                    if (jwtUtilities.isRefreshToken(refreshHeader) && jwtUtilities.isTokenValid(refreshHeader, userDetails)) {
+                        // Generate access token baru
+                        String newAccessToken = jwtUtilities.generateToken(userDetails);
+                        // Set cookie baru untuk access token
+                        cookiesOperator.setCookie(response, "access_token", newAccessToken, 60 * 60);
+
+                        // Set authentication context
+                        UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                                userDetails, null, userDetails.getAuthorities()
+                        );
+                        authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                        SecurityContextHolder.getContext().setAuthentication(authToken);
+
+                        // Lanjutkan filter chain
+                        filterChain.doFilter(request, response);
+										} else {
+                        // Refresh token invalid atau expired
+                        response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid refresh token");
+                        return;
+										}
+								}
+            }
+
+            // Kalau tidak ada refresh token juga, lanjutkan tanpa authentication
             filterChain.doFilter(request, response);
             return;
         }
 
         // Validate if the Authorization header is present and starts with "Bearer "
-        jwt = authHeader.substring(7);
-
-        // Check if the token is refresh token or if the access token has been blacklisted
-        // || jwtConfig.isTokenBlacklisted(jwt)
-        if (jwtUtilities.isRefreshToken(jwt)) {
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
-            return;
-        }
+        jwt = authHeader;
 
         // Extract user ID from the token
-        userId = jwtUtilities.extractId(jwt).toString();
+        userId = jwtUtilities.extractId(jwt);
         
         // Validate token and set authentication context
         if (StringUtils.isNotEmpty(userId) && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetails userDetails = userDetailsServiceImpl.loadUserByUsername(userId);
 
-            // Check if the access token valid and refresh token exists in database
-            if (jwtUtilities.isTokenValid(jwt, userDetails) && refreshTokenRepository.findByUserId(UUID.fromString(userId)).isPresent()) {
-                
+            boolean isAccessTokenValid = jwtUtilities.isTokenValid(jwt, userDetails);
+            boolean isAccessTokenBlacklisted = jwtUtilities.isTokenBlacklisted(jwt);
+            boolean hasRefreshToken = !refreshTokenRepository.findByUserId(UUID.fromString(userId)).isEmpty();
+
+            if (isAccessTokenValid && hasRefreshToken && !isAccessTokenBlacklisted) {
                 // Create an authentication token
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
                 authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
@@ -87,7 +120,37 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 SecurityContextHolder.getContext().setAuthentication(authToken);
 
                 /* Store the access token to redis cache after its used */
-                // jwtConfig.blacklistedToken(jwt);
+                jwtUtilities.blacklistedToken(jwt);
+            } else if (hasRefreshToken) {
+
+                // Akses token expired tapi refresh token masih ada, coba refresh otomatis
+                String refreshToken = cookiesOperator.getCookieValue(request, "refresh_token");
+
+                if (StringUtils.isNotEmpty(refreshToken) && jwtUtilities.isRefreshToken(refreshToken) && jwtUtilities.isTokenValid(refreshToken, userDetails)) {
+
+                    // Generate token baru
+                    String newAccessToken = jwtUtilities.generateToken(userDetails);
+
+                    // Set cookie baru
+                    cookiesOperator.setCookie(response, "access_token", newAccessToken, 60 * 60);
+
+                    // Auth langsung pakai token baru
+                    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                            userDetails, null, userDetails.getAuthorities()
+                    );
+
+                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authToken);
+
+                    filterChain.doFilter(request, response);
+								} else {
+                    response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid refresh token");
+                    return;
+								}
+
+						} else {
+                response.sendError(HttpServletResponse.SC_FORBIDDEN, "Token expired or blacklisted");
+                return;
             }
         }
 
